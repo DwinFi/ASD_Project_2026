@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Визуализатор сортировок</title>
+<style>
+  :root {
+    --bg: #0f1220;
+    --card: rgba(26, 31, 53, 0.7);
+    --border: rgba(108, 140, 255, 0.2);
+    --accent: #6c8cff;
+    --accent-2: #9b6cff;
+    --text: #e7e9f5;
+    --muted: #9aa0bd;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(circle at top left, #1b2140, #0f1220 60%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .subtitle {
+    color: var(--muted);
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1000px;
+    margin-bottom: 30px;
+  }
+
+  .algo-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    backdrop-filter: blur(10px);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .algo-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--accent);
+    transition: 0.3s;
+  }
+
+  .algo-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(108, 140, 255, 0.2);
+    background: rgba(35, 42, 71, 0.8);
+  }
+  
+  .algo-btn:hover::before { width: 100%; opacity: 0.1; }
+  
+  .algo-btn.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(108, 140, 255, 0.3);
+  }
+  .algo-btn.active::before { width: 100%; opacity: 0.15; }
+
+  .algo-btn span { display: block; position: relative; z-index: 1; }
+  .algo-btn small {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .panel {
+    display: none;
+    background: var(--card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 1000px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    animation: slideUp 0.4s ease;
+  }
+
+  .panel.active { display: block; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(18, 22, 43, 0.8);
+    color: var(--text);
+    font-size: 1.1rem;
+    font-family: inherit;
+    outline: none;
+    transition: 0.3s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(108, 140, 255, 0.2);
+  }
+
+  .run-btn {
+    padding: 16px 30px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    white-space: nowrap;
+  }
+
+  .run-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(108, 140, 255, 0.4);
+  }
+
+  .result-box {
+    background: #090b14;
+    border-radius: 12px;
+    border: 1px solid #1f2540;
+    padding: 20px;
+    min-height: 80px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 1rem;
+    word-break: break-all;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .result-title {
+    color: #4ade80;
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .result-title::before {
+    content: '✓';
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: rgba(74, 222, 128, 0.2);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+  }
+
+  .log-box {
+    color: #9aa0bd;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #2a3155;
+    white-space: pre-wrap;
+  }
+
+  .error { color: #f87171; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+  .error::before { content: '✕'; }
+  .loader { color: var(--accent); font-weight: bold; display: flex; align-items: center; gap: 10px; }
+  .loader::before { content: '⏳'; }
+</style>
+</head>
+<body>
+
+<h1>Визуализатор сортировок</h1>
+<div class="subtitle">Выберите алгоритм и введите массив чисел для сортировки</div>
+
+<div class="menu">
+  <button class="algo-btn" onclick="selectAlgo('bubble', 'Сортировка бусинами', this)">
+    <span>Сортировка бусинами</span><small>Beadsort</small>
+  </button>
+  <button class="algo-btn" onclick="selectAlgo('gnome', 'Гномья сортировка', this)">
+    <span>Гномья сортировка</span><small>Gnome Sort</small>
+  </button>
+  <button class="algo-btn" onclick="selectAlgo('piramida', 'Пирамидальная сортировка', this)">
+    <span>Пирамидальная</span><small>Heapsort</small>
+  </button>
+  <button class="algo-btn" onclick="selectAlgo('random', 'Случайная сортировка', this)">
+    <span>Случайная (Bogo)</span><small>Bogosort</small>
+  </button>
+  <button class="algo-btn" onclick="selectAlgo('sleep', 'Сортировка сном', this)">
+    <span>Сортировка сном</span><small>Sleep Sort</small>
+  </button>
+</div>
+
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <div class="panel-title" id="panel-title">Название</div>
+  </div>
+  
+  <div class="input-group">
+    <input type="text" id="arrayInput" placeholder="Например: 5 3 8 1 9" onkeydown="if(event.key==='Enter') runSort()">
+    <button class="run-btn" onclick="runSort()">Сортировать</button>
+  </div>
+  
+  <div class="result-box" id="resultBox">
+    <span style="color: #9aa0bd;">Здесь появится результат...</span>
+  </div>
+</div>
+
+<script>
+let currentAlgo = null;
+
+function selectAlgo(algoId, title, btnElement) {
+  currentAlgo = algoId;
+  document.getElementById('panel-title').textContent = title;
+  document.getElementById('panel').classList.add('active');
+  document.getElementById('arrayInput').value = '';
+  document.getElementById('arrayInput').focus();
+  
+  const box = document.getElementById('resultBox');
+  box.innerHTML = '<span style="color: #9aa0bd;">Здесь появится результат...</span>';
+  
+  document.querySelectorAll('.algo-btn').forEach(b => b.classList.remove('active'));
+  btnElement.classList.add('active');
+}
+
+async function runSort() {
+  const arrStr = document.getElementById('arrayInput').value;
+  const box = document.getElementById('resultBox');
+  
+  if (!arrStr.trim()) {
+    box.innerHTML = '<div class="error">Пожалуйста, введите числа!</div>';
+    return;
+  }
+
+  box.innerHTML = '<div class="loader">Выполняется сортировка...</div>';
+
+  try {
+    const response = await fetch('/sort', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ algorithm: currentAlgo, array: arrStr })
+    });
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      box.innerHTML = `<div class="error">${data.error}</div>`;
+    } else {
+      let html = `<div class="result-title">Результат: [${data.result.join(', ')}]</div>`;
+      if (data.log) {
+        html += `<div class="log-box">${data.log}</div>`;
+      }
+      box.innerHTML = html;
+    }
+  } catch (e) {
+    box.innerHTML = `<div class="error">Ошибка соединения с сервером.</div>`;
+  }
+}
+</script>
+</body>
+</html>
